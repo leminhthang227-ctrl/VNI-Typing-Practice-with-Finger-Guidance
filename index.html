@@ -178,7 +178,7 @@ function guideKey(k){
 }
 
 /* ===== TRAINING CORE ===== */
-let steps=[],idx=0,out='',committedChars=0,time=60,timer=null;
+let steps=[],idx=0,out='',committedChars=0,baseD=false,time=60,timer=null;
 const hiddenInput=document.getElementById('hiddenInput');
 const timerEl=document.getElementById('timer');
 const hint=document.getElementById('hint');
@@ -255,7 +255,7 @@ timerEl.textContent =
 
 hiddenInput.addEventListener('keydown',e=>{if(e.key==='Backspace')e.preventDefault();});
 
-let baseVowel='',toneBuffer='';
+let baseVowel='',toneBuffer='',baseD=false;
 hiddenInput.addEventListener('keyup',e=>{
   const need=steps[idx];if(!need)return;
   const k=e.key===' '?' ':e.key.toLowerCase();
@@ -266,12 +266,32 @@ hiddenInput.addEventListener('keyup',e=>{
   baseVowel=k;
   toneBuffer='';
 }
+else if(k === 'd'){
+  out += 'd';
+  baseD = true;
+  // KHÔNG tăng committedChars
+}
 
-  else if(/[1-9]/.test(k)&&baseVowel){
-    toneBuffer+=k;
-    const key=baseVowel+toneBuffer;
-    if(composeMap[key]) out=out.slice(0,-1)+composeMap[key];
-  }else{out+=k;baseVowel='';toneBuffer='';}
+else if(k === '9' && baseD){
+  out = out.slice(0, -1) + 'đ';
+  committedChars++;
+  baseD = false;
+}
+else if(/[1-9]/.test(k) && baseVowel){
+  toneBuffer += k;
+  const key = baseVowel + toneBuffer;
+  if(composeMap[key]){
+    out = out.slice(0, -1) + composeMap[key];
+  }
+}
+
+else{
+  out += k;
+  committedChars++;
+  baseVowel = '';
+  toneBuffer = '';
+  baseD = false;
+}
   idx++;
   renderLines();
   guideKey(steps[idx]);
