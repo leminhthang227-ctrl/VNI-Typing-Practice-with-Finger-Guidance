@@ -211,7 +211,7 @@ function generateRandomText(targetLength = 300){
   return result.trim().slice(0, targetLength);
 }
 
-let steps=[],idx=0,out='',committedChars=0,baseD=false,time=60,timer=null;
+let steps=[],idx=0,out='',committedChars=0,baseD=false,composingVowel=false,time=60,timer=null;
 const hiddenInput=document.getElementById('hiddenInput');
 const timerEl=document.getElementById('timer');
 const hint=document.getElementById('hint');
@@ -296,10 +296,10 @@ hiddenInput.addEventListener('keyup',e=>{
   if(k!==need){hint.textContent='Sai phím';return;}
   if(/[aeiouy]/.test(k)){
   out += k;
-  committedChars++;
   baseVowel = k;
   toneBuffer = '';
-  baseD = false;   // ← DÒNG QUYẾT ĐỊNH
+  baseD = false;
+  composingVowel = true;   // ← ĐANG GHÉP CỤM
 }
 
 else if(k === 'd'){
@@ -319,16 +319,23 @@ else if(/[1-9]/.test(k) && baseVowel){
   const key = baseVowel + toneBuffer;
   if(composeMap[key]){
     out = out.slice(0, -1) + composeMap[key];
+    committedChars++;          // ← CHỮ HOÀN CHỈNH
+    composingVowel = false;
   }
 }
 
 else{
+  if(composingVowel){
+    committedChars++;      // ← COMMIT CỤM NGUYÊN ÂM TRƯỚC
+    composingVowel = false;
+  }
   out += k;
   committedChars++;
   baseVowel = '';
   toneBuffer = '';
   baseD = false;
 }
+
   idx++;
   renderLines();
   guideKey(steps[idx]);
