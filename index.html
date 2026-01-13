@@ -211,7 +211,7 @@ function generateRandomText(targetLength = 300){
   return result.trim().slice(0, targetLength);
 }
 
-let steps=[],idx=0,out='',committedChars=0,baseD=false,composingVowel=false,time=60,timer=null;
+let steps=[],idx=0,out='',committedChars=0,time=60,timer=null;
 const hiddenInput=document.getElementById('hiddenInput');
 const timerEl=document.getElementById('timer');
 const hint=document.getElementById('hint');
@@ -290,51 +290,42 @@ timerEl.textContent =
 hiddenInput.addEventListener('keydown',e=>{if(e.key==='Backspace')e.preventDefault();});
 
 let baseVowel='',toneBuffer='';
-hiddenInput.addEventListener('keyup',e=>{
-  const need=steps[idx];if(!need)return;
-  const k=e.key===' '?' ':e.key.toLowerCase();
-  if(k!==need){hint.textContent='Sai phím';return;}
-  if(/[aeiouy]/.test(k)){
-  out += k;
-  baseVowel = k;
-  toneBuffer = '';
-  baseD = false;
-  composingVowel = true;   // ← ĐANG GHÉP CỤM
-}
+hiddenInput.addEventListener('keyup', e => {
+  const need = steps[idx];
+  if (!need) return;
 
-else if(k === 'd'){
-  out += 'd';
-  baseD = true;
-  baseVowel = '';
-  toneBuffer = '';
-}
+  const k = e.key === ' ' ? ' ' : e.key.toLowerCase();
+  if (k !== need) return;
 
-else if(k === '9' && baseD){
-  out = out.slice(0, -1) + 'đ';
-  committedChars++;
-  baseD = false;
-}
-else if(/[1-9]/.test(k) && baseVowel){
+  // --- D9 → Đ (REPLACE, KHÔNG COMMIT) ---
+  if (k === '9' && out.endsWith('d')) {
+    out = out.slice(0, -1) + 'đ';
+  }
+
+  // --- DẤU NGUYÊN ÂM (REPLACE) ---
+  else if (/[1-9]/.test(k) && baseVowel) {
   toneBuffer += k;
   const key = baseVowel + toneBuffer;
-  if(composeMap[key]){
+  if (composeMap[key]) {
     out = out.slice(0, -1) + composeMap[key];
-    committedChars++;          // ← CHỮ HOÀN CHỈNH
-    composingVowel = false;
+    baseVowel = '';     // ← THÊM DÒNG NÀY
+    toneBuffer = '';    // ← VÀ DÒNG NÀY
   }
 }
 
-else{
-  if(composingVowel){
-    committedChars++;      // ← COMMIT CỤM NGUYÊN ÂM TRƯỚC
-    composingVowel = false;
+  // --- NGUYÊN ÂM / PHỤ ÂM / SPACE (COMMIT) ---
+  else {
+    out += k;
+    committedChars++;
+
+    if (/[aeiouy]/.test(k)) {
+      baseVowel = k;
+      toneBuffer = '';
+    } else {
+      baseVowel = '';
+      toneBuffer = '';
+    }
   }
-  out += k;
-  committedChars++;
-  baseVowel = '';
-  toneBuffer = '';
-  baseD = false;
-}
 
   idx++;
   renderLines();
@@ -343,10 +334,16 @@ else{
 
 document.getElementById('randomBtn').onclick = () => {
   const ta = document.getElementById('sampleInput');
-  if (ta.value.trim().length === 0 ||
-      ta.value.includes('hãy nhập đoạn văn bản')) {
-    ta.value = generateRandomText(300);
-  }
+  ta.value = generateRandomText(300);
+
+  // RESET STATE
+  steps = [];
+  idx = 0;
+  out = '';
+  committedChars = 0;
+  baseVowel = '';
+  toneBuffer = '';
+  renderLines();
 };
 
 document.getElementById('startBtn').onclick=start;
