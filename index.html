@@ -59,12 +59,16 @@ svg{border:1px solid #ddd;border-radius:6px;background:#fafafa}
 
 /* ===== RESULT BOX ===== */
 .result{
-  margin-top:20px;
-  padding:16px;
-  border:2px solid #4caf50;
-  border-radius:10px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding:24px 32px;
+  border:3px solid #4caf50;
+  border-radius:12px;
   text-align:center;
   background:#f6fff8;
+  z-index: 9999;
 }
 
 .result-title{
@@ -129,6 +133,9 @@ hãy nhập đoạn văn bản bạn muốn luyện tại ô này
   <div class="result-wpm">
     WPM = <span id="resultWPM">0</span>
   </div>
+  <button id="resetBtn" style="margin-top:16px;font-size:16px;padding:8px 16px">
+    Luyện lại
+  </button>
 </div>
 
 </div>
@@ -399,16 +406,23 @@ const textWPM = Math.floor(committedChars / 5);
 timerEl.textContent =
   `Thời gian: ${time}s |`;
 
-    if(time <= 0){
+if(time <= 0){
   clearInterval(timer);
 
   const finalWPM = Math.floor(committedChars / 5);
-
   resultWPM.textContent = finalWPM;
-  resultBox.classList.remove('hidden');
 
-  hint.textContent = 'Hoàn thành bài luyện';
+  // Ẩn giao diện luyện
+  document.querySelector('.text-wrapper').style.display = 'none';
+  document.getElementById('keyboard').style.display = 'none';
+  document.querySelector('.hands').style.display = 'none';
+  document.getElementById('timer').style.display = 'none';
+  document.getElementById('hint').style.display = 'none';
+
+  // Hiện kết quả giữa màn hình
+  resultBox.classList.remove('hidden');
 }
+
 
   },1000);
   renderLines();
@@ -512,6 +526,16 @@ document.querySelector('.container').addEventListener('click', e => {
     hiddenInput.focus();
   }
 });
+
+  // rất nhiều code ở trên
+  // xử lý keyup
+  // xử lý timer
+  // xử lý resultBox
+
+ document.getElementById('resetBtn').onclick = () => {
+  resultBox.classList.add('hidden');
+  start();
+};
 
 </script>
 </body>
