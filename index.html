@@ -295,11 +295,13 @@ hiddenInput.addEventListener('keyup',e=>{
   const k=e.key===' '?' ':e.key.toLowerCase();
   if(k!==need){hint.textContent='Sai phím';return;}
   if(/[aeiouy]/.test(k)){
-  out+=k;
-  committedChars++;      // ← THÊM DÒNG NÀY
-  baseVowel=k;
-  toneBuffer='';
+  out += k;
+  committedChars++;
+  baseVowel = k;
+  toneBuffer = '';
+  baseD = false;   // ← DÒNG QUYẾT ĐỊNH
 }
+
 else if(k === 'd'){
   out += 'd';
   baseD = true;
@@ -333,9 +335,13 @@ else{
 });
 
 document.getElementById('randomBtn').onclick = () => {
-  document.getElementById('sampleInput').value =
-    generateRandomText(300);
+  const ta = document.getElementById('sampleInput');
+  if (ta.value.trim().length === 0 ||
+      ta.value.includes('hãy nhập đoạn văn bản')) {
+    ta.value = generateRandomText(300);
+  }
 };
+
 document.getElementById('startBtn').onclick=start;
 document.querySelector('.container').onclick=()=>hiddenInput.focus();
 </script>
