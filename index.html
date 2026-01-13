@@ -309,9 +309,6 @@ hiddenInput.addEventListener('keyup', e => {
   if (composeMap[key]) {
     out = out.slice(0, -1) + composeMap[key];
 
-    // 🔥 CHỐT CHỮ NGAY TẠI ĐÂY
-    committedChars++;
-
     baseVowel = '';
     toneBuffer = '';
   }
@@ -319,17 +316,22 @@ hiddenInput.addEventListener('keyup', e => {
 
   // --- NGUYÊN ÂM / PHỤ ÂM / SPACE (COMMIT) ---
   else {
-    out += k;
+  // 🔥 nếu đang có chữ trước chưa commit → commit nó
+  if (baseVowel !== '') {
     committedChars++;
-
-    if (/[aeiouy]/.test(k)) {
-      baseVowel = k;
-      toneBuffer = '';
-    } else {
-      baseVowel = '';
-      toneBuffer = '';
-    }
+    baseVowel = '';
+    toneBuffer = '';
   }
+
+  out += k;
+
+  // CHƯA commit chữ mới
+  if (/[aeiouy]/.test(k)) {
+    baseVowel = k;
+  } else {
+    committedChars++; // phụ âm / space → commit ngay
+  }
+}
 
   idx++;
   renderLines();
