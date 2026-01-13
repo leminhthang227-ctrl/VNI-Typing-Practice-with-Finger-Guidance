@@ -62,9 +62,13 @@ svg{border:1px solid #ddd;border-radius:6px;background:#fafafa}
 
 <body>
 <div class="container">
-<h1>Luyện gõ 10 ngón tiếng Việt – VNI cổ điển</h1>
+<h1>LUYỆN GÕ VNI 10 NGÓN TIẾNG VIỆT</h1>
 
-<textarea id="sampleInput" rows="2">hãy nhập đoạn văn bản bạn muốn luyện tại ô này</textarea>
+<textarea id="sampleInput" rows="2">
+hãy nhập đoạn văn bản bạn muốn luyện tại ô này
+</textarea>
+
+<button id="randomBtn">Random text</button>
 <button id="startBtn">Bắt đầu luyện</button>
 
 <div class="text-wrapper">
@@ -183,6 +187,30 @@ function guideKey(k){
 }
 
 /* ===== TRAINING CORE ===== */
+/* ===== RANDOM TEXT SOURCE ===== */
+const randomTexts = [
+  'hai con thằn lằn con vịt đang bơi dưới ao làng yên ả',
+  'người thợ rèn gõ búa đều tay giữa buổi trưa nắng gắt',
+  'trời mưa nhẹ làm con đường đất trở nên trơn trượt',
+  'đàn chim sẻ bay ngang qua mái nhà lúc chiều xuống',
+  'bà cụ ngồi bên hiên kể chuyện ngày xưa cho cháu nghe',
+  'dòng sông uốn lượn quanh làng mang theo phù sa đỏ',
+  'tiếng gà gáy vang xa báo hiệu một ngày mới bắt đầu',
+  'ngọn đèn dầu leo lét soi sáng căn phòng nhỏ yên tĩnh',
+  'cơn gió nhẹ thổi qua hàng tre phát ra âm thanh xào xạc',
+  'chiếc thuyền nhỏ trôi chậm trên mặt nước phẳng lặng'
+];
+
+function generateRandomText(targetLength = 300){
+  let result = '';
+  while(result.length < targetLength){
+    const sentence =
+      randomTexts[Math.floor(Math.random() * randomTexts.length)];
+    result += sentence + ' ';
+  }
+  return result.trim().slice(0, targetLength);
+}
+
 let steps=[],idx=0,out='',committedChars=0,baseD=false,time=60,timer=null;
 const hiddenInput=document.getElementById('hiddenInput');
 const timerEl=document.getElementById('timer');
@@ -304,6 +332,10 @@ else{
   guideKey(steps[idx]);
 });
 
+document.getElementById('randomBtn').onclick = () => {
+  document.getElementById('sampleInput').value =
+    generateRandomText(300);
+};
 document.getElementById('startBtn').onclick=start;
 document.querySelector('.container').onclick=()=>hiddenInput.focus();
 </script>
