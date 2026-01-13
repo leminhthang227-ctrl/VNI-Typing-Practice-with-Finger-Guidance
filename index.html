@@ -178,7 +178,7 @@ function guideKey(k){
 }
 
 /* ===== TRAINING CORE ===== */
-let steps=[],idx=0,out='',time=60,timer=null;
+let steps=[],idx=0,out='',committedChars=0,time=60,timer=null;
 const hiddenInput=document.getElementById('hiddenInput');
 const timerEl=document.getElementById('timer');
 const hint=document.getElementById('hint');
@@ -211,7 +211,7 @@ function toSteps(txt){
 function renderLines(){
   const src = [...document.getElementById('sampleInput').value];
   const typed = [...out];
-  const cur = typed.length;
+ const cur = committedChars;
 
   const LINE_LEN = 40;
   const start = Math.floor(cur / LINE_LEN) * LINE_LEN;
@@ -260,7 +260,13 @@ hiddenInput.addEventListener('keyup',e=>{
   const need=steps[idx];if(!need)return;
   const k=e.key===' '?' ':e.key.toLowerCase();
   if(k!==need){hint.textContent='Sai phím';return;}
-  if(/[aeiouy]/.test(k)){out+=k;baseVowel=k;toneBuffer='';}
+  if(/[aeiouy]/.test(k)){
+  out+=k;
+  committedChars++;      // ← THÊM DÒNG NÀY
+  baseVowel=k;
+  toneBuffer='';
+}
+
   else if(/[1-9]/.test(k)&&baseVowel){
     toneBuffer+=k;
     const key=baseVowel+toneBuffer;
