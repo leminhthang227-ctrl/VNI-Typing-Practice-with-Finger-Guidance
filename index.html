@@ -57,6 +57,37 @@ svg{border:1px solid #ddd;border-radius:6px;background:#fafafa}
   pointer-events: none;
 }
 
+/* ===== RESULT BOX ===== */
+.result{
+  margin-top:20px;
+  padding:16px;
+  border:2px solid #4caf50;
+  border-radius:10px;
+  text-align:center;
+  background:#f6fff8;
+}
+
+.result-title{
+  font-size:22px;
+  font-weight:bold;
+  color:#2e7d32;
+  margin-bottom:8px;
+}
+
+.result-wpm{
+  display:inline-block;
+  padding:8px 16px;
+  border:2px dashed #4caf50;
+  border-radius:8px;
+  font-size:20px;
+  font-weight:bold;
+  color:#1b5e20;
+}
+
+.hidden{
+  display:none;
+}
+
 </style>
 </head>
 
@@ -92,6 +123,14 @@ hãy nhập đoạn văn bản bạn muốn luyện tại ô này
 </div>
 
 <div class="hint" id="hint"></div>
+
+<div id="resultBox" class="result hidden">
+  <div class="result-title">Chúc mừng!</div>
+  <div class="result-wpm">
+    WPM = <span id="resultWPM">0</span>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -211,12 +250,22 @@ function generateRandomText(targetLength = 300){
   return result.trim().slice(0, targetLength);
 }
 
-let steps=[],idx=0,out='',committedChars=0,time=60,timer=null;
+let steps=[],idx=0,out='',time=60,timer=null;
+
+// ===== DISPLAY COUNTERS (QUAN TRỌNG) =====
+let committedChars = 0;     // số ký tự gốc đã hoàn thành
+let charSteps = [];         // số phím cho từng ký tự gốc
+let currentCharIdx = 0;     // đang gõ ký tự gốc thứ mấy
+let currentCharStep = 0;    // đã gõ bao nhiêu phím của ký tự đó
+
 const hiddenInput=document.getElementById('hiddenInput');
 const timerEl=document.getElementById('timer');
 const hint=document.getElementById('hint');
 const line1=document.getElementById('line1');
 const line2=document.getElementById('line2');
+const resultBox = document.getElementById('resultBox');
+const resultWPM = document.getElementById('resultWPM');
+
 
 function toSteps(txt){
   const s = [];
@@ -239,6 +288,15 @@ function toSteps(txt){
   }
 
   return s;
+}
+
+// ===== MAP SỐ PHÍM CHO MỖI KÝ TỰ GỐC =====
+function stepsForChar(ch){
+  return stepMap[ch] ? stepMap[ch].length : 1;
+}
+
+function prepareCharSteps(text){
+  charSteps = [...text.toLowerCase()].map(stepsForChar);
 }
 
 function renderLines(){
@@ -270,17 +328,44 @@ function renderLines(){
 
 
 function start(){
-  steps=toSteps(document.getElementById('sampleInput').value.trim());
-  idx=0;out='';
-  time=60;
+  const text = document.getElementById('sampleInput').value.trim();
+
+  steps = toSteps(text);
+  prepareCharSteps(text);
+
+  idx = 0;
+  out = '';
+  time = 60;
+
+  committedChars = 0;
+  currentCharIdx = 0;
+  currentCharStep = 0;
+  
   clearInterval(timer);
+  
   timer=setInterval(()=>{
     time--;
-    const chars = out.replace(/\s+/g, '').length;
-timerEl.textContent =
-  `Thời gian: ${time}s | WPM: ${Math.round(chars / 5)}`;
+    const elapsed = 60 - time;
+const keystrokes = idx;   // idx = số phím đã gõ (đúng với VNI)
+const grossWPM = elapsed > 0
+  ? Math.round((keystrokes / 5) * (60 / elapsed))
+  : 0;
+const textWPM = Math.floor(committedChars / 5);
 
-    if(time<=0){clearInterval(timer);hint.textContent='Hết giờ';}
+timerEl.textContent =
+  `Thời gian: ${time}s |`;
+
+    if(time <= 0){
+  clearInterval(timer);
+
+  const finalWPM = Math.floor(committedChars / 5);
+
+  resultWPM.textContent = finalWPM;
+  resultBox.classList.remove('hidden');
+
+  hint.textContent = 'Hoàn thành bài luyện';
+}
+
   },1000);
   renderLines();
   hiddenInput.focus();
@@ -290,6 +375,7 @@ timerEl.textContent =
 hiddenInput.addEventListener('keydown',e=>{if(e.key==='Backspace')e.preventDefault();});
 
 let baseVowel='',toneBuffer='';
+
 hiddenInput.addEventListener('keyup', e => {
   const need = steps[idx];
   if (!need) return;
@@ -297,45 +383,36 @@ hiddenInput.addEventListener('keyup', e => {
   const k = e.key === ' ' ? ' ' : e.key.toLowerCase();
   if (k !== need) return;
 
-  // --- D9 → Đ (REPLACE, KHÔNG COMMIT) ---
+  // ===== HIỂN THỊ (IME TỐI GIẢN) =====
   if (k === '9' && out.endsWith('d')) {
     out = out.slice(0, -1) + 'đ';
   }
-
-  // --- DẤU NGUYÊN ÂM (REPLACE) ---
- else if (/[1-9]/.test(k) && baseVowel) {
-  toneBuffer += k;
-  const key = baseVowel + toneBuffer;
-  if (composeMap[key]) {
-    out = out.slice(0, -1) + composeMap[key];
-
-    baseVowel = '';
-    toneBuffer = '';
+  else if (/[1-9]/.test(k)) {
+    const last = out.slice(-1);
+    const key = last + k;
+    if (composeMap[key]) {
+      out = out.slice(0, -1) + composeMap[key];
+    } else {
+      out += k;
+    }
   }
-}
-
-  // --- NGUYÊN ÂM / PHỤ ÂM / SPACE (COMMIT) ---
   else {
-  // 🔥 nếu đang có chữ trước chưa commit → commit nó
-  if (baseVowel !== '') {
-    committedChars++;
-    baseVowel = '';
-    toneBuffer = '';
+    out += k;
   }
 
-  out += k;
+// ===== TRAINER CORE (ĐÚNG) =====
+currentCharStep++;
 
-  // CHƯA commit chữ mới
-  if (/[aeiouy]/.test(k)) {
-    baseVowel = k;
-  } else {
-    committedChars++; // phụ âm / space → commit ngay
-  }
+if(currentCharStep >= charSteps[currentCharIdx]){
+  committedChars++;          // ✅ xong 1 ký tự gốc
+  currentCharIdx++;
+  currentCharStep = 0;
 }
 
-  idx++;
-  renderLines();
-  guideKey(steps[idx]);
+idx++;
+renderLines();
+guideKey(steps[idx]);
+
 });
 
 document.getElementById('randomBtn').onclick = () => {
@@ -353,7 +430,12 @@ document.getElementById('randomBtn').onclick = () => {
 };
 
 document.getElementById('startBtn').onclick=start;
-document.querySelector('.container').onclick=()=>hiddenInput.focus();
+document.querySelector('.container').addEventListener('click', e => {
+  if (e.target.id !== 'sampleInput') {
+    hiddenInput.focus();
+  }
+});
+
 </script>
 </body>
 </html>
