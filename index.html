@@ -219,10 +219,11 @@ function renderLines(){
   let html = '';
 
   for(let i = start; i < start + LINE_LEN; i++){
-    if(i < typed.length){
+    if(i < cur){
       html += `<span class="typed">${src[i] || ''}</span>`;
     }
-    else if(i === typed.length){
+    else if(i === cur){
+
       html += `<span class="cursor"></span><span class="sample">${src[i] || ''}</span>`;
     }
     else{
@@ -255,7 +256,7 @@ timerEl.textContent =
 
 hiddenInput.addEventListener('keydown',e=>{if(e.key==='Backspace')e.preventDefault();});
 
-let baseVowel='',toneBuffer='',baseD=false;
+let baseVowel='',toneBuffer='';
 hiddenInput.addEventListener('keyup',e=>{
   const need=steps[idx];if(!need)return;
   const k=e.key===' '?' ':e.key.toLowerCase();
@@ -269,7 +270,8 @@ hiddenInput.addEventListener('keyup',e=>{
 else if(k === 'd'){
   out += 'd';
   baseD = true;
-  // KHÔNG tăng committedChars
+  baseVowel = '';
+  toneBuffer = '';
 }
 
 else if(k === '9' && baseD){
