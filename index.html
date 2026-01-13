@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>Luyện gõ 10 ngón tiếng Việt – VNI (FINAL)</title>
+
+<style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;padding:20px}
+.container{max-width:1100px;margin:auto;background:#fff;padding:20px;border-radius:8px}
+h1{margin-top:0}
+
+textarea,input{width:100%;font-size:18px;padding:8px;margin-top:6px}
+button{margin-top:8px;padding:6px 12px;font-size:16px}
+
+/* ===== TEXT DISPLAY (2 LINES ONLY) ===== */
+.text-wrapper{
+  font-family:Consolas,"Courier New",monospace;
+  font-size:24px;
+  line-height:1.6;
+  margin:16px 0;
+  max-height:3.2em; /* 2 lines */
+  overflow:hidden;
+}
+.line{
+  white-space:pre;
+}
+.sample{color:#bbb}
+.typed{color:#4caf50}
+.cursor{
+  display:inline-block;
+  width:2px;
+  height:1.2em;
+  background:#000;
+  animation:blink 1s steps(2,start) infinite;
+}
+@keyframes blink{to{visibility:hidden}}
+
+.keyboard{margin-top:16px}
+.row{display:flex;justify-content:center}
+.key{width:38px;height:38px;margin:3px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;border-radius:4px;background:#eee;font-weight:bold}
+.key.active{background:#4caf50;color:#fff}
+
+.hands{display:flex;justify-content:space-between;margin-top:16px}
+svg{border:1px solid #ddd;border-radius:6px;background:#fafafa}
+.finger{fill:#ccc}
+.finger.active{fill:#ff9800}
+
+.hint{margin-top:10px;color:#444;font-weight:bold}
+.timer{margin-top:10px;font-weight:bold}
+
+#hiddenInput{position:absolute;opacity:0;pointer-events:none}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>Luyện gõ 10 ngón tiếng Việt – VNI cổ điển</h1>
+
+<textarea id="sampleInput" rows="2">hai con thằn lằn con vịt</textarea>
+<button id="startBtn">Bắt đầu luyện</button>
+
+<div class="text-wrapper">
+  <div class="line" id="line1"></div>
+  <div class="line" id="line2"></div>
+</div>
+
+<input id="hiddenInput" />
+
+<div class="timer" id="timer">Thời gian: 60s | WPM: 0</div>
+<div class="keyboard" id="keyboard"></div>
+
+<div class="hands">
+  <svg id="handLeft" width="240" height="160"></svg>
+  <svg id="handRight" width="240" height="160"></svg>
+</div>
+
+<div class="hint" id="hint"></div>
+</div>
+
+<script>
+/* ===== VNI STEP MAP ===== */
+const specialVowels = {
+  'ươ': ['u','o','7'],
+  'ướ': ['u','o','7','1'],
+  'ườ': ['u','o','7','2'],
+  'ưở': ['u','o','7','3'],
+  'ưỡ': ['u','o','7','4'],
+  'ượ': ['u','o','7','5']
+};
+
+const stepMap={
+  'a':['a'],'á':['a','1'],'à':['a','2'],'ả':['a','3'],'ã':['a','4'],'ạ':['a','5'],
+  'â':['a','6'],'ấ':['a','6','1'],'ầ':['a','6','2'],'ẩ':['a','6','3'],'ẫ':['a','6','4'],'ậ':['a','6','5'],
+  'ă':['a','8'],'ắ':['a','8','1'],'ằ':['a','8','2'],'ẳ':['a','8','3'],'ẵ':['a','8','4'],'ặ':['a','8','5'],
+  'e':['e'],'é':['e','1'],'è':['e','2'],'ẻ':['e','3'],'ẽ':['e','4'],'ẹ':['e','5'],
+  'ê':['e','6'],'ế':['e','6','1'],'ề':['e','6','2'],'ể':['e','6','3'],'ễ':['e','6','4'],'ệ':['e','6','5'],
+  'i':['i'],'í':['i','1'],'ì':['i','2'],'ỉ':['i','3'],'ĩ':['i','4'],'ị':['i','5'],
+  'o':['o'],'ó':['o','1'],'ò':['o','2'],'ỏ':['o','3'],'õ':['o','4'],'ọ':['o','5'],
+  'ô':['o','6'],'ố':['o','6','1'],'ồ':['o','6','2'],'ổ':['o','6','3'],'ỗ':['o','6','4'],'ộ':['o','6','5'],
+  'ơ':['o','7'],'ớ':['o','7','1'],'ờ':['o','7','2'],'ở':['o','7','3'],'ỡ':['o','7','4'],'ợ':['o','7','5'],
+  'u':['u'],'ú':['u','1'],'ù':['u','2'],'ủ':['u','3'],'ũ':['u','4'],'ụ':['u','5'],
+  'ư':['u','7'],'ứ':['u','7','1'],'ừ':['u','7','2'],'ử':['u','7','3'],'ữ':['u','7','4'],'ự':['u','7','5'],
+  'y':['y'],'ý':['y','1'],'ỳ':['y','2'],'ỷ':['y','3'],'ỹ':['y','4'],'ỵ':['y','5'],
+  'đ':['d','9'],
+  ' ':[' ']
+};
+
+const composeMap={
+  'a1':'á','a2':'à','a3':'ả','a4':'ã','a5':'ạ',
+  'a6':'â','a61':'ấ','a62':'ầ','a63':'ẩ','a64':'ẫ','a65':'ậ',
+  'a8':'ă','a81':'ắ','a82':'ằ','a83':'ẳ','a84':'ẵ','a85':'ặ',
+  'e1':'é','e2':'è','e3':'ẻ','e4':'ẽ','e5':'ẹ',
+  'e6':'ê','e61':'ế','e62':'ề','e63':'ể','e64':'ễ','e65':'ệ',
+  'i1':'í','i2':'ì','i3':'ỉ','i4':'ĩ','i5':'ị',
+  'o1':'ó','o2':'ò','o3':'ỏ','o4':'õ','o5':'ọ',
+  'o6':'ô','o61':'ố','o62':'ồ','o63':'ổ','o64':'ỗ','o65':'ộ',
+  'o7':'ơ','o71':'ớ','o72':'ờ','o73':'ở','o74':'ỡ','o75':'ợ',
+  'u1':'ú','u2':'ù','u3':'ủ','u4':'ũ','u5':'ụ',
+  'u7':'ư','u71':'ứ','u72':'ừ','u73':'ử','u74':'ữ','u75':'ự',
+  'y1':'ý','y2':'ỳ','y3':'ỷ','y4':'ỹ','y5':'ỵ',
+  'd9':'đ'
+};
+
+/* ===== KEYBOARD + HAND ===== */
+const keyboardLayout=[['1','2','3','4','5','6','7','8','9','0'],['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l',';'],['z','x','c','v','b','n','m',',','.','/']];
+const fingerMap={
+  q:'l5',a:'l5',z:'l5',
+  w:'l4',s:'l4',x:'l4','1':'l5',
+  e:'l3',d:'l3',c:'l3','2':'l4',
+  r:'l2',f:'l2',v:'l2',t:'l2',g:'l2','3':'l3','4':'l2','5':'l2',
+  y:'r2',h:'r2',n:'r2',u:'r2',j:'r2','6':'r2','7':'r2',
+  i:'r3',k:'r3',m:'r3','8':'r3',
+  o:'r4',l:'r4',',':'r4','9':'r4',
+  p:'r5',';':'r5','.':'r5','/':'r5','0':'r5',
+  ' ':'l1'
+};
+
+const keyboardEl=document.getElementById('keyboard');
+function renderKeyboard(active){
+  keyboardEl.innerHTML='';
+  keyboardLayout.forEach(row=>{
+    const r=document.createElement('div');r.className='row';
+    row.forEach(k=>{
+      const d=document.createElement('div');d.className='key';d.textContent=k;
+      if(k===active)d.classList.add('active');
+      r.appendChild(d);
+    });
+    keyboardEl.appendChild(r);
+  });
+}
+function drawHand(svg,active){
+  svg.innerHTML='';
+  const xs=[20,60,100,140,180];
+  const ids=svg.id==='handLeft'?['l5','l4','l3','l2','l1']:['r1','r2','r3','r4','r5'];
+  xs.forEach((x,i)=>{
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x);r.setAttribute('y',40);
+    r.setAttribute('width',30);r.setAttribute('height',90);
+    r.setAttribute('rx',12);
+    r.setAttribute('class','finger'+(active===ids[i]?' active':''));
+    svg.appendChild(r);
+  });
+}
+function guideKey(k){
+  renderKeyboard(k);
+  const f=fingerMap[k];
+  drawHand(handLeft,f&&f.startsWith('l')?f:null);
+  drawHand(handRight,f&&f.startsWith('r')?f:null);
+  hint.textContent=`Gõ phím: ${k===' '?'SPACE':k}`;
+}
+
+/* ===== TRAINING CORE ===== */
+let steps=[],idx=0,out='',time=60,timer=null;
+const hiddenInput=document.getElementById('hiddenInput');
+const timerEl=document.getElementById('timer');
+const hint=document.getElementById('hint');
+const line1=document.getElementById('line1');
+const line2=document.getElementById('line2');
+
+function toSteps(txt){
+  const s = [];
+  const chars = [...txt.toLowerCase()];
+
+  for(let i = 0; i < chars.length; i++){
+    const pair = chars[i] + (chars[i+1] || '');
+
+    if(specialVowels[pair]){
+      s.push(...specialVowels[pair]);
+      i++; // bỏ qua ký tự sau
+      continue;
+    }
+
+    if(stepMap[chars[i]]){
+      s.push(...stepMap[chars[i]]);
+    }else{
+      s.push(chars[i]);
+    }
+  }
+
+  return s;
+}
+
+function renderLines(){
+  const src = [...document.getElementById('sampleInput').value];
+  const typed = [...out];
+  const cur = typed.length;
+
+  const LINE_LEN = 40;
+  const start = Math.floor(cur / LINE_LEN) * LINE_LEN;
+
+  let html = '';
+
+  for(let i = start; i < start + LINE_LEN; i++){
+    if(i < typed.length){
+      html += `<span class="typed">${src[i] || ''}</span>`;
+    }
+    else if(i === typed.length){
+      html += `<span class="cursor"></span><span class="sample">${src[i] || ''}</span>`;
+    }
+    else{
+      html += `<span class="sample">${src[i] || ''}</span>`;
+    }
+  }
+
+  line1.innerHTML = html;
+  line2.textContent = '';
+}
+
+
+function start(){
+  steps=toSteps(document.getElementById('sampleInput').value.trim());
+  idx=0;out='';
+  time=60;
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    time--;
+    const chars = out.replace(/\s+/g, '').length;
+timerEl.textContent =
+  `Thời gian: ${time}s | WPM: ${Math.round(chars / 5)}`;
+
+    if(time<=0){clearInterval(timer);hint.textContent='Hết giờ';}
+  },1000);
+  renderLines();
+  hiddenInput.focus();
+  guideKey(steps[0]);
+}
+
+hiddenInput.addEventListener('keydown',e=>{if(e.key==='Backspace')e.preventDefault();});
+
+let baseVowel='',toneBuffer='';
+hiddenInput.addEventListener('keyup',e=>{
+  const need=steps[idx];if(!need)return;
+  const k=e.key===' '?' ':e.key.toLowerCase();
+  if(k!==need){hint.textContent='Sai phím';return;}
+  if(/[aeiouy]/.test(k)){out+=k;baseVowel=k;toneBuffer='';}
+  else if(/[1-9]/.test(k)&&baseVowel){
+    toneBuffer+=k;
+    const key=baseVowel+toneBuffer;
+    if(composeMap[key]) out=out.slice(0,-1)+composeMap[key];
+  }else{out+=k;baseVowel='';toneBuffer='';}
+  idx++;
+  renderLines();
+  guideKey(steps[idx]);
+});
+
+document.getElementById('startBtn').onclick=start;
+document.querySelector('.container').onclick=()=>hiddenInput.focus();
+</script>
+</body>
+</html>
