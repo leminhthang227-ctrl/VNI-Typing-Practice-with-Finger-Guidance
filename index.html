@@ -72,7 +72,12 @@ svg{border:1px solid #ddd;border-radius:6px;background:#fafafa}
   <div class="line" id="line2"></div>
 </div>
 
-<input id="hiddenInput" />
+<input
+  id="hiddenInput"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+/>
 
 <div class="timer" id="timer">Thời gian: 60s | WPM: 0</div>
 <div class="keyboard" id="keyboard"></div>
@@ -139,7 +144,7 @@ const fingerMap={
   y:'r2',h:'r2',n:'r2',u:'r2',j:'r2','6':'r2','7':'r2',
   i:'r3',k:'r3',m:'r3','8':'r3',
   o:'r4',l:'r4',',':'r4','9':'r4',
-  p:'r5',';':'r5','.':'r5','/':'r5','0':'r5',
+  p:'r5',';':'r5','b':'l4','.':'r5','/':'r5','0':'r5',
   ' ':'l1'
 };
 
