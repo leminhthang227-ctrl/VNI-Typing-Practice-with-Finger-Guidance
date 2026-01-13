@@ -256,7 +256,8 @@ let steps=[],idx=0,out='',time=60,timer=null;
 let committedChars = 0;     // số ký tự gốc đã hoàn thành
 let charSteps = [];         // số phím cho từng ký tự gốc
 let currentCharIdx = 0;     // đang gõ ký tự gốc thứ mấy
-let currentCharStep = 0;    // đã gõ bao nhiêu phím của ký tự đó
+let currentCharStep = 0;    // đã gõ bao nhiêu phím của ký tự đó  
+
 
 const hiddenInput=document.getElementById('hiddenInput');
 const timerEl=document.getElementById('timer');
@@ -267,37 +268,80 @@ const resultBox = document.getElementById('resultBox');
 const resultWPM = document.getElementById('resultWPM');
 
 
+// ===== FIX START: toSteps with cluster =====
 function toSteps(txt){
-  const s = [];
-  const chars = [...txt.toLowerCase()];
+  const text = txt.toLowerCase();
+  const steps = [];
+  let i = 0;
 
-  for(let i = 0; i < chars.length; i++){
-    const pair = chars[i] + (chars[i+1] || '');
+  while (i < text.length) {
 
-    if(specialVowels[pair]){
-      s.push(...specialVowels[pair]);
-      i++; // bỏ qua ký tự sau
-      continue;
+    // ===== ƯU TIÊN CỤM ĐẶC BIỆT (ươ, ướ, ...) =====
+    let matched = false;
+    for (const cluster in specialVowels) {
+      if (text.startsWith(cluster, i)) {
+        steps.push(...specialVowels[cluster]);
+        i += cluster.length;
+        matched = true;
+        break;
+      }
     }
+    if (matched) continue;
 
-    if(stepMap[chars[i]]){
-      s.push(...stepMap[chars[i]]);
-    }else{
-      s.push(chars[i]);
+    // ===== KÝ TỰ ĐƠN =====
+    const ch = text[i];
+    if (stepMap[ch]) {
+      steps.push(...stepMap[ch]);
+    } else {
+      steps.push(ch);
     }
+    i++;
   }
 
-  return s;
+  return steps;
 }
+
+// ===== FIX END =====
+
 
 // ===== MAP SỐ PHÍM CHO MỖI KÝ TỰ GỐC =====
 function stepsForChar(ch){
   return stepMap[ch] ? stepMap[ch].length : 1;
 }
 
+// ===== FIX START: charSteps sync =====
 function prepareCharSteps(text){
-  charSteps = [...text.toLowerCase()].map(stepsForChar);
+  charSteps = [];
+  const txt = text.toLowerCase();
+  let i = 0;
+
+  while (i < txt.length) {
+
+    let matched = false;
+    for (const cluster in specialVowels) {
+      if (txt.startsWith(cluster, i)) {
+        charSteps.push({
+          steps: specialVowels[cluster].length, // số phím cần gõ
+          chars: cluster.length                 // số ký tự gốc
+        });
+        i += cluster.length;
+        matched = true;
+        break;
+      }
+    }
+    if (matched) continue;
+
+    const ch = txt[i];
+    charSteps.push({
+      steps: stepMap[ch]?.length || 1,
+      chars: 1
+    });
+    i++;
+  }
 }
+
+
+// ===== FIX END =====
 
 function renderLines(){
   const src = [...document.getElementById('sampleInput').value];
@@ -376,42 +420,75 @@ hiddenInput.addEventListener('keydown',e=>{if(e.key==='Backspace')e.preventDefau
 
 let baseVowel='',toneBuffer='';
 
+function gotoNextStep(){
+  currentCharStep++;
+
+  const info = charSteps[currentCharIdx];
+
+  if (currentCharStep >= info.steps) {
+    committedChars += info.chars; // 🔥 CHỐT: không còn lệch nhịp
+    currentCharIdx++;
+    currentCharStep = 0;
+  }
+
+  idx++;
+  renderLines();
+  guideKey(steps[idx]);
+}
+
+
 hiddenInput.addEventListener('keyup', e => {
   const need = steps[idx];
   if (!need) return;
 
   const k = e.key === ' ' ? ' ' : e.key.toLowerCase();
   if (k !== need) return;
+  
+else if (k === '7') {
 
-  // ===== HIỂN THỊ (IME TỐI GIẢN) =====
-  if (k === '9' && out.endsWith('d')) {
-    out = out.slice(0, -1) + 'đ';
-  }
-  else if (/[1-9]/.test(k)) {
-    const last = out.slice(-1);
-    const key = last + k;
-    if (composeMap[key]) {
-      out = out.slice(0, -1) + composeMap[key];
-    } else {
-      out += k;
-    }
-  }
-  else {
-    out += k;
+  // ƯƠ
+  if (out.endsWith('uo')) {
+    out = out.slice(0, -2) + 'ươ';
+    // QUAN TRỌNG: return để 7 KHÔNG tạo 'ư'
+    gotoNextStep();
+    return;
   }
 
-// ===== TRAINER CORE (ĐÚNG) =====
-currentCharStep++;
+  // Ư
+  if (out.endsWith('u')) {
+    out = out.slice(0, -1) + 'ư';
+    gotoNextStep();
+    return;
+  }
 
-if(currentCharStep >= charSteps[currentCharIdx]){
-  committedChars++;          // ✅ xong 1 ký tự gốc
-  currentCharIdx++;
-  currentCharStep = 0;
+  // Ơ
+  if (out.endsWith('o')) {
+    out = out.slice(0, -1) + 'ơ';
+    gotoNextStep();
+    return;
+  }
+
+  gotoNextStep();
+  return;
 }
 
-idx++;
-renderLines();
-guideKey(steps[idx]);
+else if (/[1-9]/.test(k)) {
+  const last = out.slice(-1);
+  const key = last + k;
+  if (composeMap[key]) {
+    out = out.slice(0, -1) + composeMap[key];
+  } else {
+    out += k;
+  }
+  gotoNextStep();
+  return;
+}
+
+else {
+  out += k;
+  gotoNextStep();
+  return;
+}
 
 });
 
