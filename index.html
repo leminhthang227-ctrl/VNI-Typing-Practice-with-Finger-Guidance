@@ -303,13 +303,17 @@ hiddenInput.addEventListener('keyup', e => {
   }
 
   // --- DẤU NGUYÊN ÂM (REPLACE) ---
-  else if (/[1-9]/.test(k) && baseVowel) {
+ else if (/[1-9]/.test(k) && baseVowel) {
   toneBuffer += k;
   const key = baseVowel + toneBuffer;
   if (composeMap[key]) {
     out = out.slice(0, -1) + composeMap[key];
-    baseVowel = '';     // ← THÊM DÒNG NÀY
-    toneBuffer = '';    // ← VÀ DÒNG NÀY
+
+    // 🔥 CHỐT CHỮ NGAY TẠI ĐÂY
+    committedChars++;
+
+    baseVowel = '';
+    toneBuffer = '';
   }
 }
 
