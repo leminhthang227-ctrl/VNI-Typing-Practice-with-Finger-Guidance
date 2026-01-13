@@ -48,7 +48,15 @@ svg{border:1px solid #ddd;border-radius:6px;background:#fafafa}
 .hint{margin-top:10px;color:#444;font-weight:bold}
 .timer{margin-top:10px;font-weight:bold}
 
-#hiddenInput{position:absolute;opacity:0;pointer-events:none}
+#hiddenInput {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
 </style>
 </head>
 
@@ -56,7 +64,7 @@ svg{border:1px solid #ddd;border-radius:6px;background:#fafafa}
 <div class="container">
 <h1>Luyện gõ 10 ngón tiếng Việt – VNI cổ điển</h1>
 
-<textarea id="sampleInput" rows="2">hai con thằn lằn con vịt</textarea>
+<textarea id="sampleInput" rows="2">hãy nhập đoạn văn bản bạn muốn luyện tại ô này</textarea>
 <button id="startBtn">Bắt đầu luyện</button>
 
 <div class="text-wrapper">
